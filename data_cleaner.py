@@ -16,7 +16,7 @@ def isInShips(Id):
         return next(ship for ship in ships if ship.Id == Id)
     return None
         
-df = pd.read_csv('debs2018_training_labeled_short.csv')
+df = pd.read_csv('debs2018_training_labeled.csv')
 del df['REPORTED_DRAUGHT']
 # check for timestamps that are higher than the arrival time
 index1 = df[df['TIMESTAMP'] > df['ARRIVAL_CALC']].index
@@ -30,55 +30,55 @@ index = index1.union(index2.union(index3))
 
 ships = []
 
-for i in range(df.shape[0]):
+for i, row in df.iterrows():
     if(i in index):
         continue
     print(i)
 
-    Id = df.iloc[i]['SHIP_ID']
-    typ = df.iloc[i]['SHIPTYPE']
-    speed = df.iloc[i]['SPEED']
-    lon = df.iloc[i]['LON']
-    lat = df.iloc[i]['LAT']
-    course = df.iloc[i]['COURSE']
-    heading = df.iloc[i]['HEADING']
-    timestamp = df.iloc[i]['TIMESTAMP']
-    dep = df.iloc[i]['DEPARTURE_PORT_NAME']
+    Id = row['SHIP_ID']
+    typ = row['SHIPTYPE']
+    speed = row['SPEED']
+    lon = row['LON']
+    lat = row['LAT']
+    course = row['COURSE']
+    heading = row['HEADING']
+    timestamp = row['TIMESTAMP']
+    dep = row['DEPARTURE_PORT_NAME']
     s = isInShips(Id)
 
     if(s == None):
         
         new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, i)
         ships.append(new_ship)
-        arr = df.iloc[i]['ARRIVAL_CALC']  
+        arr = row['ARRIVAL_CALC']  
         arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M') 
-        t = df.iloc[i]['TIMESTAMP']
+        t = row['TIMESTAMP']
         t_date = datetime.strptime(t, '%d-%m-%y %H:%M')
         timediff = (arr_date-t_date).seconds/60
-        df.set_value(i, 'ARRIVAL_CALC', timediff)
-        df.set_value(i, 'TIMESTAMP', 0)
+        df.at[i, 'ARRIVAL_CALC'] = timediff
+        df.at[i, 'TIMESTAMP'] = 0
         
     else:
         
         t1 = s.getFirstTimestamp()
         t1_date = datetime.strptime(t1, '%d-%m-%y %H:%M')
-        t = df.iloc[i]['TIMESTAMP']
+        t = row['TIMESTAMP']
         t_date = datetime.strptime(t, '%d-%m-%y %H:%M')
         tdiff = (t_date-t1_date).seconds/60
-        df.set_value(i, 'TIMESTAMP', tdiff)
-        arr = df.iloc[i]['ARRIVAL_CALC']
+        df.at[i, 'TIMESTAMP'] = tdiff
+        arr = row['ARRIVAL_CALC']
         arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M')
         timediff = (arr_date-t_date).seconds/60
-        df.set_value(i, 'ARRIVAL_CALC', timediff)
+        df.at[i, 'ARRIVAL_CALC'] = timediff
         s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
         
     # converting strings to float. needs tweaking
-    dep = df.iloc[i]['DEPARTURE_PORT_NAME']
-    arrival = df.iloc[i]['ARRIVAL_PORT_CALC']
-    df.set_value(i, 'ARRIVAL_PORT_CALC', string_to_int(arrival))
-    df.set_value(i, 'DEPARTURE_PORT_NAME', string_to_int(dep))
+    dep = row['DEPARTURE_PORT_NAME']
+    arrival = row['ARRIVAL_PORT_CALC']
+    df.at[i, 'ARRIVAL_PORT_CALC'] = string_to_int(arrival)
+    df.at[i, 'DEPARTURE_PORT_NAME'] = string_to_int(dep)
     
 df = df.drop(index)
-df.to_csv('bigtest.csv')
+df.to_csv('bigtest.csv',index=False)
 end = time.time()
 print(end-start)
