@@ -1,55 +1,26 @@
 import pandas as pd
 from datetime import datetime
 from ship import ship
+from ships import ships
+from preclean import preclean
 import time
 import sys
 
+def checkColumns(df):
+    cols = {'SHIP_ID', 'SHIPTYPE', 'SPEED', 'LON', 'LAT', 'COURSE', 'HEADING', 'TIMESTAMP'}
+    cols.update({'DEPARTURE_PORT_NAME','REPORTED_DRAUGHT', 'ARRIVAL_CALC', 'ARRIVAL_PORT_CALC'})
+    if cols.issubset(df.columns):
+        return True
+    return False
 
-def dropUselessData(df):
-
-    index1 = df[df['TIMESTAMP'] > df['ARRIVAL_CALC']].index
-    # check for empty arrival port field
-    index2 = df[df['ARRIVAL_PORT_CALC'] != df['ARRIVAL_PORT_CALC']].index
-    # check for empty arrival time calculation
-    index3 = df[df['ARRIVAL_CALC'] != df['ARRIVAL_CALC']].index
-    index4 = df[df['SPEED'] == 0.0].index
-    # merge all 4 indices into 1, eliminating doubles which 
-    # would throw an error if they were to be dropped twice
-    index = index1.union(index2.union(index3.union(index4)))
-    df_dropped = df.drop(index)
-    return df_dropped
-
-def createStringToIntMap(dff):
-    namelist = {}
-    df = dropUselessData(dff)
-    uniq_names = pd.unique(df[['DEPARTURE_PORT_NAME', 'ARRIVAL_PORT_CALC']].values.ravel('K'))
-
-    for i in range(len(uniq_names)):
-        convert = {uniq_names[i]: string_to_int(uniq_names[i])}
-        namelist.update(convert)
-    return namelist
-
-# convert port names to ints
-def string_to_int(str):
-    summe = 0
-    for c in str:
-        summe = summe + ord(c)
-    return summe
-
-def isInShips(Id, ships):
-    if(Id in [x.Id for x in ships]):
-        return next(ship for ship in ships if ship.Id == Id)
-    return None
-
-def clean(dff, namelist):
+def clean(pc):
     start = time.time()
-    ships = []
-    df = dropUselessData(dff)
+    shiplist = ships()
+    df = pc.dropUselessData()
     del df['REPORTED_DRAUGHT']
+    namelist = pc.createStringToIntMap()
 
     for i, row in df.iterrows():
-        # if(i in index):
-        #     continue
         print(i)
 
         Id = row['SHIP_ID']
@@ -61,12 +32,12 @@ def clean(dff, namelist):
         heading = row['HEADING']
         timestamp = row['TIMESTAMP']
         dep = row['DEPARTURE_PORT_NAME']
-        s = isInShips(Id, ships)
+        s = shiplist.hasShip(Id)
 
         if(s == None):
             # add new ship to a list
             new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, i)
-            ships.append(new_ship)
+            shiplist.addShip(new_ship)
             # compute the difference from this timestamp in regards to the arrival time
             arr = row['ARRIVAL_CALC']  
             arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M') 
@@ -99,7 +70,6 @@ def clean(dff, namelist):
         df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
         df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
         
-    # df = dropUselessData(df)
     df.to_csv('bigtest.csv',index=False)
     end = time.time()
     print(end-start)
@@ -108,8 +78,10 @@ if __name__ == "__main__":
     csvfile = sys.argv[1]
     if(csvfile.lower().endswith('.csv')):
         df = pd.read_csv(csvfile)
-        namelist = createStringToIntMap(df)
-        clean(df, namelist)
+        if(not checkColumns(df)):
+            sys.exit("csv file does not have required columns")
+        pc = preclean(df)
+        clean(pc)
     else:
         sys.exit("command line argument is not a csv file")
 # else:
