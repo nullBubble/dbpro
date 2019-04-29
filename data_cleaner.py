@@ -5,6 +5,7 @@ import time
 
 start = time.time()
 
+# convert port names to ints
 def string_to_int(str):
     summe = 0
     for c in str:
@@ -24,9 +25,11 @@ index1 = df[df['TIMESTAMP'] > df['ARRIVAL_CALC']].index
 index2 = df[df['ARRIVAL_PORT_CALC'] != df['ARRIVAL_PORT_CALC']].index
 # check for empty arrival time calculation
 index3 = df[df['ARRIVAL_CALC'] != df['ARRIVAL_CALC']].index
-# merge all 3 indices into 1, eliminating doubles which 
+
+index4 = df[df['SPEED'] == 0.0].index
+# merge all 4 indices into 1, eliminating doubles which 
 # would throw an error if they were to be dropped twice
-index = index1.union(index2.union(index3))
+index = index1.union(index2.union(index3.union(index4)))
 
 ships = []
 
@@ -47,19 +50,23 @@ for i, row in df.iterrows():
     s = isInShips(Id)
 
     if(s == None):
-        
+        # add new ship to a list
         new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, i)
         ships.append(new_ship)
+        # compute the difference from this timestamp in regards to the arrival time
         arr = row['ARRIVAL_CALC']  
         arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M') 
         t = row['TIMESTAMP']
         t_date = datetime.strptime(t, '%d-%m-%y %H:%M')
         timediff = (arr_date-t_date).seconds/60
         df.at[i, 'ARRIVAL_CALC'] = timediff
+        # set the first timestamp seen for a ship, so a new route, to 0. following
+        # timestamps are relative to this 0 time value
         df.at[i, 'TIMESTAMP'] = 0
         
     else:
-        
+        # ship already seen atleast once, update track and timestamps with the help of 
+        # a ship object which holds the trackinformation for each single ship object
         t1 = s.getFirstTimestamp()
         t1_date = datetime.strptime(t1, '%d-%m-%y %H:%M')
         t = row['TIMESTAMP']
@@ -72,7 +79,7 @@ for i, row in df.iterrows():
         df.at[i, 'ARRIVAL_CALC'] = timediff
         s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
         
-    # converting strings to float. needs tweaking
+    # converting strings to int. needs tweaking
     dep = row['DEPARTURE_PORT_NAME']
     arrival = row['ARRIVAL_PORT_CALC']
     df.at[i, 'ARRIVAL_PORT_CALC'] = string_to_int(arrival)
