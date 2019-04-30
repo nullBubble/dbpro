@@ -13,6 +13,12 @@ def checkColumns(df):
         return True
     return False
 
+def calcTimeDifference(arrival, timestamp):
+    arr_date = datetime.strptime(arrival, '%d-%m-%y %H:%M')
+    timestamp_date = datetime.strptime(timestamp, '%d-%m-%y %H:%M')
+    timediff = (arr_date-timestamp_date).seconds/60
+    return timediff
+
 def clean(pc):
     start = time.time()
     shiplist = ships()
@@ -22,7 +28,7 @@ def clean(pc):
 
     for i, row in df.iterrows():
         print(i)
-
+        speedtreshold = 20
         Id = row['SHIP_ID']
         typ = row['SHIPTYPE']
         speed = row['SPEED']
@@ -40,11 +46,8 @@ def clean(pc):
             shiplist.addShip(new_ship)
             # compute the difference from this timestamp in regards to the arrival time
             arr = row['ARRIVAL_CALC']  
-            arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M') 
             t = row['TIMESTAMP']
-            t_date = datetime.strptime(t, '%d-%m-%y %H:%M')
-            timediff = (arr_date-t_date).seconds/60
-            df.at[i, 'ARRIVAL_CALC'] = timediff
+            df.at[i, 'ARRIVAL_CALC'] = calcTimeDifference(arr, t)
             # set the first timestamp seen for a ship, so a new route, to 0. following
             # timestamps are relative to this 0 time value
             df.at[i, 'TIMESTAMP'] = 0
@@ -53,15 +56,11 @@ def clean(pc):
             # ship already seen atleast once, update track and timestamps with the help of 
             # a ship object which holds the trackinformation for each single ship object
             t1 = s.getFirstTimestamp()
-            t1_date = datetime.strptime(t1, '%d-%m-%y %H:%M')
             t = row['TIMESTAMP']
-            t_date = datetime.strptime(t, '%d-%m-%y %H:%M')
-            tdiff = (t_date-t1_date).seconds/60
-            df.at[i, 'TIMESTAMP'] = tdiff
+            df.at[i, 'TIMESTAMP'] = calcTimeDifference(t, t1)
             arr = row['ARRIVAL_CALC']
-            arr_date = datetime.strptime(arr, '%d-%m-%y %H:%M')
-            timediff = (arr_date-t_date).seconds/60
-            df.at[i, 'ARRIVAL_CALC'] = timediff
+            df.at[i, 'ARRIVAL_CALC'] = calcTimeDifference(arr, t)
+
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
             
         # converting strings to int. needs tweaking
