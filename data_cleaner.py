@@ -14,10 +14,10 @@ def checkColumns(df):
         return True
     return False
 
-def calcTimeDifference(timest1, timest2):
-    timest1_date = datetime.strptime(timest1, '%d-%m-%y %H:%M')
+def calcTimeDifference(timest2, timest1):
     timest2_date = datetime.strptime(timest2, '%d-%m-%y %H:%M')
-    timediff = (timest1_date-timest2_date).seconds/60
+    timest1_date = datetime.strptime(timest1, '%d-%m-%y %H:%M')
+    timediff = (timest2_date-timest1_date).seconds/60
     return timediff
 
 def clean(pc, ip):
@@ -26,10 +26,12 @@ def clean(pc, ip):
     df = pc.dropUselessData()
     del df['REPORTED_DRAUGHT']
     namelist = pc.createStringToIntMap()
+    timetreshold = 5
+    speedtreshold = 15
 
     for i, row in df.iterrows():
         print("current row:"+str(i))
-        speedtreshold = 15
+
         Id = row['SHIP_ID']
         typ = row['SHIPTYPE']
         speed = row['SPEED']
@@ -62,12 +64,18 @@ def clean(pc, ip):
             arr = row['ARRIVAL_CALC']
             df.at[i, 'ARRIVAL_CALC'] = calcTimeDifference(arr, t)
 
-            prev_speed = s.getLastTrack()['speed']
+            prev_speed = s.getLastTrack()['SPEED']
+            # correct erronous speed
             if(speed-prev_speed > speedtreshold):
-                check = ip.speedcheck(s.getLastTrack(), speed, lon, lat, timestamp)
+                check = ip.speedcheck(s.getLastTrack(), row)
                 if(check != None):
                     speed = check
                     df.at[i, 'SPEED'] = check
+            # interpolate between 2 timestamps that are atleast 5 mins away
+            prev_time = s.getLastTrack()['TIMESTAMP']
+            timejump = calcTimeDifference(timestamp, prev_time)
+            if(timejump > timetreshold):
+                df = ip.interpolate(df, s.getLastTrack(), row, timejump, i)
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
             
