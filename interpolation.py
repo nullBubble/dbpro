@@ -21,25 +21,38 @@ class interpolation():
         d = 2*earth_rad*asin(sqrt(a))
         return d
 
-    def interpolate(self, df, track, row, timejump, i):
+    def interpolate(self, df, ship, row, timejump, i, namelist):
+
+        earth_rad = 6371.0088
+        track = ship.getLastTrack()
+
+        time_at_start = ship.getFirstTimestamp()
+        time_at_start_date = datetime.strptime(time_at_start, '%d-%m-%y %H:%M')
+        
+        time = track['TIMESTAMP']
+        time_date = datetime.strptime(time, '%d-%m-%y %H:%M')
+        rel_time = (time_date-time_at_start_date).seconds/60
+
         lon1 = track['LON']
         lat1 = track['LAT']
         lon2 = row['LON']
         lat2 = row['LAT']
-        time = track['TIMESTAMP']
-        earth_rad = 6371.0088
-        time_date = datetime.strptime(time, '%d-%m-%y %H:%M')
         route_len = self.harvesine(lon1,lat1,lon2,lat2)
         bearing = self.bearing(lon1,lat1,lon2,lat2)
         bearing = radians(bearing)
+
         loop_amount = floor((timejump-4)/3) + 1
         part_len = track['SPEED'] * 1.852 / 60 * 3
         p = part_len
         lon1 = radians(lon1)
         lat1 = radians(lat1)
+
         for i in range(3, int(timejump), 3):
             print(part_len)
-            new_time = time_date + timedelta(minutes=i)
+            # change time relative to timestamp before, which should be relative to the first
+            # 'time' which is the timestamp from the last track, should
+            # be subtracted with the first timestamp and on that result the 3 minutes are added
+            new_time = rel_time + i
             print(new_time)
             new_lat = asin( sin(lat1)*cos(part_len/earth_rad)+cos(lat1)*sin(part_len/earth_rad)*cos(bearing))
             new_lon = lon1 + atan2( sin(bearing)*sin(part_len/earth_rad)*cos(lat1), cos(part_len/earth_rad)-sin(lat1)*sin(new_lat))
@@ -48,12 +61,13 @@ class interpolation():
             new_lat = round(new_lat,6)
             new_lon = degrees(new_lon)
             new_lon = round(new_lon,6)
-
+            # TODO: input new rows into dataframe
             print(new_lat)
             print(new_lon)
-
             print("-----------------")
+
             part_len = part_len + p
+            
 
         # return df
 
