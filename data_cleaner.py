@@ -3,6 +3,7 @@ from datetime import datetime
 from ship import ship
 from ships import ships
 from preclean import preclean
+from interpolation import interpolation
 import time
 import sys
 
@@ -13,13 +14,13 @@ def checkColumns(df):
         return True
     return False
 
-def calcTimeDifference(arrival, timestamp):
-    arr_date = datetime.strptime(arrival, '%d-%m-%y %H:%M')
-    timestamp_date = datetime.strptime(timestamp, '%d-%m-%y %H:%M')
-    timediff = (arr_date-timestamp_date).seconds/60
+def calcTimeDifference(timest1, timest2):
+    timest1_date = datetime.strptime(timest1, '%d-%m-%y %H:%M')
+    timest2_date = datetime.strptime(timest2, '%d-%m-%y %H:%M')
+    timediff = (timest1_date-timest2_date).seconds/60
     return timediff
 
-def clean(pc):
+def clean(pc, ip):
     start = time.time()
     shiplist = ships()
     df = pc.dropUselessData()
@@ -27,8 +28,8 @@ def clean(pc):
     namelist = pc.createStringToIntMap()
 
     for i, row in df.iterrows():
-        print(i)
-        speedtreshold = 20
+        print("current row:"+str(i))
+        speedtreshold = 15
         Id = row['SHIP_ID']
         typ = row['SHIPTYPE']
         speed = row['SPEED']
@@ -61,6 +62,13 @@ def clean(pc):
             arr = row['ARRIVAL_CALC']
             df.at[i, 'ARRIVAL_CALC'] = calcTimeDifference(arr, t)
 
+            prev_speed = s.getLastTrack()['speed']
+            if(speed-prev_speed > speedtreshold):
+                check = ip.speedcheck(s.getLastTrack(), speed, lon, lat, timestamp)
+                if(check != None):
+                    speed = check
+                    df.at[i, 'SPEED'] = check
+
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
             
         # converting strings to int. needs tweaking
@@ -69,9 +77,9 @@ def clean(pc):
         df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
         df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
         
-    df.to_csv('bigtest.csv',index=False)
+    df.to_csv('interresult.csv',index=False)
     end = time.time()
-    print(end-start)
+    print("time:"+str(end-start))
 
 if __name__ == "__main__":
     csvfile = sys.argv[1]
@@ -79,8 +87,9 @@ if __name__ == "__main__":
         df = pd.read_csv(csvfile)
         if(not checkColumns(df)):
             sys.exit("csv file does not have required columns")
+        ip = interpolation(df)
         pc = preclean(df)
-        clean(pc)
+        clean(pc,ip)
     else:
         sys.exit("command line argument is not a csv file")
 # else:
