@@ -21,14 +21,15 @@ class interpolation():
         d = 2*earth_rad*asin(sqrt(a))
         return d
 
-    def interpolate(self, df, ship, row, timejump, i, namelist):
+    def interpolate(self, df, ship, row, timejump, namelist, pos):
 
         earth_rad = 6371.0088
         track = ship.getLastTrack()
-
+        position = pos
+        # calculate relative time from last point to start
+        # new time calc is relative to this timestamp
         time_at_start = ship.getFirstTimestamp()
         time_at_start_date = datetime.strptime(time_at_start, '%d-%m-%y %H:%M')
-        
         time = track['TIMESTAMP']
         time_date = datetime.strptime(time, '%d-%m-%y %H:%M')
         rel_time = (time_date-time_at_start_date).seconds/60
@@ -40,7 +41,8 @@ class interpolation():
         route_len = self.harvesine(lon1,lat1,lon2,lat2)
         bearing = self.bearing(lon1,lat1,lon2,lat2)
         bearing = radians(bearing)
-
+        # calculate loop interval and distance it covers in that amount
+        # based on last speed
         loop_amount = floor((timejump-4)/3) + 1
         part_len = track['SPEED'] * 1.852 / 60 * 3
         p = part_len
@@ -48,28 +50,53 @@ class interpolation():
         lat1 = radians(lat1)
 
         for i in range(3, int(timejump), 3):
-            print(part_len)
-            # change time relative to timestamp before, which should be relative to the first
-            # 'time' which is the timestamp from the last track, should
-            # be subtracted with the first timestamp and on that result the 3 minutes are added
+            # new interpolated positions at 3 min intervals
             new_time = rel_time + i
-            print(new_time)
+
+            # calculate new lon and lat position
             new_lat = asin( sin(lat1)*cos(part_len/earth_rad)+cos(lat1)*sin(part_len/earth_rad)*cos(bearing))
             new_lon = lon1 + atan2( sin(bearing)*sin(part_len/earth_rad)*cos(lat1), cos(part_len/earth_rad)-sin(lat1)*sin(new_lat))
 
             new_lat = degrees(new_lat)
-            new_lat = round(new_lat,6)
             new_lon = degrees(new_lon)
+            new_lat = round(new_lat,6)
             new_lon = round(new_lon,6)
-            # TODO: input new rows into dataframe
-            print(new_lat)
-            print(new_lon)
-            print("-----------------")
 
-            part_len = part_len + p
+            # get necessary information for new inserted row
+            last_arrival_time = df.at[ship.getLastTrack()['ROW'], 'ARRIVAL_CALC']
+            new_arrival_calc = last_arrival_time-i
+            arrival_port = df.at[ship.getLastTrack()['ROW'],'ARRIVAL_PORT_CALC']
+           
+            # create new row and insert it at the correct position
+            new_row = [ship.getID(),ship.getType(),track['SPEED'],new_lon,new_lat,track['COURSE'],track['HEADING'],new_time,namelist[ship.getDep()],new_arrival_calc,arrival_port]
+            df = self.insert_row(df, position, new_row)
             
+            # increment the to-be-travelled distance and update 
+            # row index for new interpolated row
+            part_len = part_len + p
+            position = position + 1
+        
+        return df
 
-        # return df
+    def insert_row(self, df, pos, row):
+        # insert new row by splitting, inserting at right position
+        # done this way so the new row does not overwrite old data
+        top_start = 0
+        top_end = pos
+        bottom_start = pos
+        bottom_end = df.shape[0]
+        
+        top_half = [*range(top_start,top_end,1)]
+        bottom_half = range(bottom_start,bottom_end,1)
+        bottom_half = [x+1 for x in bottom_half]
+
+        ind = top_half+bottom_half
+        df.index = ind
+        df.loc[pos] = row
+        df = df.sort_index()
+        return df
+
+
 
     def bearing(self,lon1,lat1,lon2,lat2):
         Lon1, Lat1, Lon2, Lat2 = map(radians, [lon1,lat1,lon2,lat2])

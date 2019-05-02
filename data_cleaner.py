@@ -20,16 +20,19 @@ def calcTimeDifference(timest2, timest1):
     timediff = (timest2_date-timest1_date).seconds/60
     return timediff
 
-def clean(pc, ip):
+def clean(pc, ip, dff):
     start = time.time()
     shiplist = ships()
-    df = pc.dropUselessData()
+    index = pc.uselessIndices()
+    df = dff
     del df['REPORTED_DRAUGHT']
     namelist = pc.createStringToIntMap()
     timetreshold = 5
     speedtreshold = 15
 
     for i, row in df.iterrows():
+        if i in index:
+            continue
         print("current row:"+str(i))
 
         Id = row['SHIP_ID']
@@ -40,9 +43,13 @@ def clean(pc, ip):
         course = row['COURSE']
         heading = row['HEADING']
         timestamp = row['TIMESTAMP']
-        dep = row['DEPARTURE_PORT_NAME']
-        s = shiplist.hasShip(Id)
 
+        dep = row['DEPARTURE_PORT_NAME']
+        arrival = row['ARRIVAL_PORT_CALC']
+        df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
+        df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
+
+        s = shiplist.hasShip(Id)
         if(s == None):
             # add new ship to a list
             new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, i)
@@ -75,17 +82,13 @@ def clean(pc, ip):
             prev_time = s.getLastTrack()['TIMESTAMP']
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
-                df = ip.interpolate(df, s.getLastTrack(), row, timejump, i)
+                df = ip.interpolate(df, s, row, timejump, namelist, i)
+                index = pc.uselessIndices()
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
             
-        # converting strings to int. needs tweaking
-        dep = row['DEPARTURE_PORT_NAME']
-        arrival = row['ARRIVAL_PORT_CALC']
-        df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
-        df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
-        
-    df.to_csv('interresult.csv',index=False)
+    df = df.drop(index)
+    df.to_csv('interresult3.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
 
@@ -97,7 +100,7 @@ if __name__ == "__main__":
             sys.exit("csv file does not have required columns")
         ip = interpolation(df)
         pc = preclean(df)
-        clean(pc,ip)
+        clean(pc, ip, df)
     else:
         sys.exit("command line argument is not a csv file")
 # else:

@@ -5,7 +5,7 @@ class preclean():
     def __init__(self, df):
         self.df = df
 
-    def dropUselessData(self):
+    def uselessIndices(self):
 
         index1 = self.df[self.df['TIMESTAMP'] > self.df['ARRIVAL_CALC']].index
         # check for empty arrival port field
@@ -16,12 +16,12 @@ class preclean():
         # merge all 4 indices into 1, eliminating doubles which 
         # would throw an error if they were to be dropped twice
         index = index1.union(index2.union(index3.union(index4)))
-        df_dropped = self.df.drop(index)
-        return df_dropped
+        
+        return index
 
     def createStringToIntMap(self):
         namelist = {}
-        df = self.dropUselessData()
+        df = self.df.drop(self.uselessIndices())
         uniq_names = pd.unique(df[['DEPARTURE_PORT_NAME', 'ARRIVAL_PORT_CALC']].values.ravel('K'))
 
         for i in range(len(uniq_names)):
