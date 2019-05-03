@@ -82,12 +82,16 @@ def clean(pc, ip, dff):
             prev_time = s.getLastTrack()['TIMESTAMP']
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
-                df = ip.interpolate(df, s, row, timejump, namelist, i)
-                index = pc.uselessIndices()
+                ip.interpolate(df, s, row, timejump, namelist, i)
+                # index = pc.uselessIndices()
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
-            
+
+    df = ip.execute_interpolate(df)       
     df = df.drop(index)
+
+    #delete sub 500 and normalize data
+
     df.to_csv('interresult3.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))

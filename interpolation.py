@@ -10,6 +10,7 @@ class interpolation():
     #x lon y lat
     def __init__(self, df):
         self.df = df
+        self.to_be_interpolated = []
 
     def harvesine(self,lon1,lat1,lon2,lat2):
         earth_rad = 6371.0088
@@ -69,13 +70,22 @@ class interpolation():
            
             # create new row and insert it at the correct position
             new_row = [ship.getID(),ship.getType(),track['SPEED'],new_lon,new_lat,track['COURSE'],track['HEADING'],new_time,namelist[ship.getDep()],new_arrival_calc,arrival_port]
-            df = self.insert_row(df, position, new_row)
-            
+            # df = self.insert_row(df, position, new_row)
+            self.to_be_interpolated.append([position, new_row])
             # increment the to-be-travelled distance and update 
             # row index for new interpolated row
             part_len = part_len + p
             position = position + 1
         
+        # return df
+    def execute_interpolate(self, dff):
+
+        df = dff
+        for i in range(len(self.to_be_interpolated)):
+            pos = self.to_be_interpolated[i][0]
+            row = self.to_be_interpolated[i][1]
+            df = self.insert_row(df, pos, row)
+
         return df
 
     def insert_row(self, df, pos, row):
@@ -99,6 +109,8 @@ class interpolation():
 
 
     def bearing(self,lon1,lat1,lon2,lat2):
+        # calculate bearing cause that information provided by the 
+        # ais data is inconsisent
         Lon1, Lat1, Lon2, Lat2 = map(radians, [lon1,lat1,lon2,lat2])
         x = sin(Lon2-Lon1)*cos(Lat2)
         y = cos(Lat1)*sin(Lat2)-sin(Lat1)*cos(Lat2)*cos(Lon2-Lon1)
@@ -107,7 +119,6 @@ class interpolation():
         
 
     def speedcheck(self, track, row):
-        # check ship class what each index is 
         lon1 = track['LON']
         lat1 = track['LAT']
         lon2 = row['LON']
