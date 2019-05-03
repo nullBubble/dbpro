@@ -44,14 +44,14 @@ class interpolation():
         bearing = radians(bearing)
         # calculate loop interval and distance it covers in that amount
         # based on last speed
-        loop_amount = floor((timejump-4)/3) + 1
-        part_len = track['SPEED'] * 1.852 / 60 * 3
+        loop_amount = floor((timejump-4)/6) + 1
+        part_len = track['SPEED'] * 1.852 / 60 * 6
         p = part_len
         lon1 = radians(lon1)
         lat1 = radians(lat1)
-
-        for i in range(3, int(timejump), 3):
-            # new interpolated positions at 3 min intervals
+        # interp = []
+        for i in range(6, int(timejump), 6):
+            # new interpolated positions at 6 min intervals
             new_time = rel_time + i
 
             # calculate new lon and lat position
@@ -65,27 +65,51 @@ class interpolation():
 
             # get necessary information for new inserted row
             last_arrival_time = df.at[ship.getLastTrack()['ROW'], 'ARRIVAL_CALC']
+            
             new_arrival_calc = last_arrival_time-i
+            if(new_arrival_calc < 0):
+                break
             arrival_port = df.at[ship.getLastTrack()['ROW'],'ARRIVAL_PORT_CALC']
            
             # create new row and insert it at the correct position
             new_row = [ship.getID(),ship.getType(),track['SPEED'],new_lon,new_lat,track['COURSE'],track['HEADING'],new_time,namelist[ship.getDep()],new_arrival_calc,arrival_port]
-            # df = self.insert_row(df, position, new_row)
-            self.to_be_interpolated.append([position, new_row])
+
+            # self.to_be_interpolated.append([position, new_row])
+
+            self.to_be_interpolated.append(new_row)
+
+            # interp.append([position, new_row])
+            
             # increment the to-be-travelled distance and update 
             # row index for new interpolated row
             part_len = part_len + p
             position = position + 1
-        
+        # self.to_be_interpolated.append(interp)
         # return df
     def execute_interpolate(self, dff):
 
         df = dff
-        for i in range(len(self.to_be_interpolated)):
-            pos = self.to_be_interpolated[i][0]
-            row = self.to_be_interpolated[i][1]
-            df = self.insert_row(df, pos, row)
+        # for i in range(len(self.to_be_interpolated)):
+        #     print(i)
+        #     pos = self.to_be_interpolated[i][0]
+        #     row = self.to_be_interpolated[i][1]
+        #     df = self.insert_row(df, pos, row)
+        # # top_start = 0
+        # # top_end = pos
+        # # bottom_start = pos
+        # # bottom_end = df.shape[0]
+        
+        # # top_half = [*range(top_start,top_end,1)]
+        # # bottom_half = range(bottom_start,bottom_end,1)
+        # # bottom_half = [x+len(self.to_be_interpolated) for x in bottom_half]
+        # # ind = top_half+bottom_half
+        # # df.index = ind
 
+        add_df = pd.DataFrame([x for x in self.to_be_interpolated], columns=['SHIP_ID','SHIPTYPE','SPEED','LON','LAT','COURSE','HEADING','TIMESTAMP','DEPARTURE_PORT_NAME','ARRIVAL_CALC','ARRIVAL_PORT_CALC'])
+        print(df)
+        df = df.append(add_df)
+
+        # self.insert_rows(dff, self.to_be_interpolated)
         return df
 
     def insert_row(self, df, pos, row):
@@ -102,11 +126,34 @@ class interpolation():
 
         ind = top_half+bottom_half
         df.index = ind
-        df.loc[pos] = row
+        df.at[pos] = row
         df = df.sort_index()
         return df
 
-
+    # def insert_rows(self, df, list):
+    #     for i in range(1):
+    #         sublist = list[i]
+    #         if(len(sublist) == 0 ):
+    #             continue
+    #         print(i)
+    #         top_start = 0
+    #         top_end = sublist[0][0]
+    #         bottom_start = sublist[0][0]
+    #         bottom_end = df.shape[0]
+    #         print(top_end)
+    #         print(bottom_end)
+                
+    #         top_half = [*range(top_start,top_end,1)]
+    #         bottom_half = range(bottom_start,bottom_end,1)
+    #         bottom_half = [x+len(sublist) for x in bottom_half]
+    #         print(top_half)
+    #         print(len(sublist))
+    #         print(bottom_half)
+    #         ind = top_half+bottom_half
+    #         df.index = ind
+    #         for i in range(len(sublist)):
+    #             df.at[sublist[i][0]] = sublist[i][1]
+    #         df = df.sort_index()
 
     def bearing(self,lon1,lat1,lon2,lat2):
         # calculate bearing cause that information provided by the 

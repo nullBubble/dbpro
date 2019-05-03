@@ -4,6 +4,7 @@ from ship import ship
 from ships import ships
 from preclean import preclean
 from interpolation import interpolation
+# from delete_sub_500 import delete_sub_500
 import time
 import sys
 
@@ -27,7 +28,7 @@ def clean(pc, ip, dff):
     df = dff
     del df['REPORTED_DRAUGHT']
     namelist = pc.createStringToIntMap()
-    timetreshold = 5
+    timetreshold = 25
     speedtreshold = 15
 
     for i, row in df.iterrows():
@@ -87,12 +88,12 @@ def clean(pc, ip, dff):
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
 
+    df = df.drop(index) 
+    # df.to_csv('interresult3.csv',index=False)
     df = ip.execute_interpolate(df)       
-    df = df.drop(index)
-
     #delete sub 500 and normalize data
 
-    df.to_csv('interresult3.csv',index=False)
+    df.to_csv('interresultbig.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
 
