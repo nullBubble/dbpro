@@ -24,10 +24,10 @@ def calcTimeDifference(timest2, timest1):
 def clean(pc, ip, dff):
     start = time.time()
     shiplist = ships()
-    index = pc.uselessIndices()
     df = dff
-    del df['REPORTED_DRAUGHT']
-    namelist = pc.createStringToIntMap()
+    df = df.drop(columns=['REPORTED_DRAUGHT'])
+    index = pc.uselessIndices(df)
+    namelist = pc.createStringToIntMap(df)
     timetreshold = 25
     speedtreshold = 15
 
@@ -84,7 +84,6 @@ def clean(pc, ip, dff):
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
                 ip.interpolate(df, s, row, timejump, namelist, i)
-                # index = pc.uselessIndices()
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
 
@@ -93,9 +92,10 @@ def clean(pc, ip, dff):
     df = ip.execute_interpolate(df)       
     #delete sub 500 and normalize data
 
-    df.to_csv('interresultbig.csv',index=False)
+    df.to_csv('interresultbig2.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
+    print(len(index))
 
 if __name__ == "__main__":
     csvfile = sys.argv[1]
@@ -103,8 +103,8 @@ if __name__ == "__main__":
         df = pd.read_csv(csvfile)
         if(not checkColumns(df)):
             sys.exit("csv file does not have required columns")
-        ip = interpolation(df)
-        pc = preclean(df)
+        ip = interpolation()
+        pc = preclean()
         clean(pc, ip, df)
     else:
         sys.exit("command line argument is not a csv file")

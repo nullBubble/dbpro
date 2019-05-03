@@ -8,8 +8,7 @@ from ship import ship
 class interpolation():
 
     #x lon y lat
-    def __init__(self, df):
-        self.df = df
+    def __init__(self):
         self.to_be_interpolated = []
 
     def harvesine(self,lon1,lat1,lon2,lat2):
@@ -106,7 +105,7 @@ class interpolation():
         # # df.index = ind
 
         add_df = pd.DataFrame([x for x in self.to_be_interpolated], columns=['SHIP_ID','SHIPTYPE','SPEED','LON','LAT','COURSE','HEADING','TIMESTAMP','DEPARTURE_PORT_NAME','ARRIVAL_CALC','ARRIVAL_PORT_CALC'])
-        print(df)
+        print(add_df)
         df = df.append(add_df)
 
         # self.insert_rows(dff, self.to_be_interpolated)

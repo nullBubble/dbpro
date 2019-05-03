@@ -1,27 +1,29 @@
 import pandas as pd
-
+import numpy as np
 class preclean():
 
-    def __init__(self, df):
-        self.df = df
-
-    def uselessIndices(self):
-
-        index1 = self.df[self.df['TIMESTAMP'] > self.df['ARRIVAL_CALC']].index
+    
+    def uselessIndices(self, dff):
+        df = dff
+        index1 = df[df['TIMESTAMP'] > df['ARRIVAL_CALC']].index
         # check for empty arrival port field
-        index2 = self.df[self.df['ARRIVAL_PORT_CALC'] != self.df['ARRIVAL_PORT_CALC']].index
+        index2 = df[df['ARRIVAL_PORT_CALC'] != df['ARRIVAL_PORT_CALC']].index
         # check for empty arrival time calculation
-        index3 = self.df[self.df['ARRIVAL_CALC'] != self.df['ARRIVAL_CALC']].index
-        index4 = self.df[self.df['SPEED'] == 0.0].index
+        index3 = df[df['ARRIVAL_CALC'] != df['ARRIVAL_CALC']].index
+        index4 = df[df['SPEED'] == 0.0].index
         # merge all 4 indices into 1, eliminating doubles which 
         # would throw an error if they were to be dropped twice
-        index = index1.union(index2.union(index3.union(index4)))
+        # empty cells
+        index5 = np.where(pd.isnull(df))[0]
+        index = index1.union(index2.union(index3.union(index4.union(index5))))
+        # index = index1.union(index2.union(index3.union(index4)))
         
         return index
 
-    def createStringToIntMap(self):
+    def createStringToIntMap(self, dff):
         namelist = {}
-        df = self.df.drop(self.uselessIndices())
+        df = dff
+        df = df.drop(self.uselessIndices(df))
         uniq_names = pd.unique(df[['DEPARTURE_PORT_NAME', 'ARRIVAL_PORT_CALC']].values.ravel('K'))
 
         for i in range(len(uniq_names)):

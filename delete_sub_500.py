@@ -16,7 +16,7 @@ for i, row in df.iterrows():
         indexes_to_drop.append(i)
 
 df = df.drop(df.index[indexes_to_drop])
-df.to_csv('interresultbig_removed.csv',index=False)
+df.to_csv(sys.argv[1],index=False)
    
 # class delete_sub_500():
 

@@ -2,9 +2,9 @@ from sklearn import preprocessing
 import sys
 import pandas as pd
 
-df = pd.read_csv('interresultbig.csv')
+df = pd.read_csv(sys.argv[1])
 
-scaler = preprocessing.RobustScaler()
+scaler = preprocessing.MinMaxScaler()
 df['SHIPTYPE'] = scaler.fit_transform(df['SHIPTYPE'].values.astype(float).reshape(-1,1))
 df['SPEED'] = scaler.fit_transform(df['SPEED'].values.astype(float).reshape(-1,1))
 df['LON'] = scaler.fit_transform(df['LON'].values.astype(float).reshape(-1,1))
@@ -16,4 +16,5 @@ df['DEPARTURE_PORT_NAME'] = scaler.fit_transform(df['DEPARTURE_PORT_NAME'].value
 df['ARRIVAL_CALC'] = scaler.fit_transform(df['ARRIVAL_CALC'].values.astype(float).reshape(-1,1))
 df['ARRIVAL_PORT_CALC'] = scaler.fit_transform(df['ARRIVAL_PORT_CALC'].values.astype(float).reshape(-1,1))
 
-df.to_csv('interresultbig_Robust_scaled.csv')
+df.to_csv(sys.argv[1],index=False)
+
