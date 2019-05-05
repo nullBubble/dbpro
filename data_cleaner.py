@@ -89,10 +89,10 @@ def clean(pc, ip, dff):
 
     df = df.drop(index) 
     # df.to_csv('interresult3.csv',index=False)
-    df = ip.execute_interpolate(df)       
-    #delete sub 500 and normalize data
+    df = ip.execute_interpolate(df)     
 
-    df.to_csv('interresultbig2.csv',index=False)
+
+    df.to_csv('reference.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
     print(len(index))
