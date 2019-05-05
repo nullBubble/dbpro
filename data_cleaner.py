@@ -4,11 +4,13 @@ from ship import ship
 from ships import ships
 from preclean import preclean
 from interpolation import interpolation
-# from delete_sub_500 import delete_sub_500
+from delete_sub_500 import delete_sub_500
+from normalizer import normalizer
 import time
 import sys
 
 def checkColumns(df):
+    # check if columns availble when converting training data set
     cols = {'SHIP_ID', 'SHIPTYPE', 'SPEED', 'LON', 'LAT', 'COURSE', 'HEADING', 'TIMESTAMP'}
     cols.update({'DEPARTURE_PORT_NAME','REPORTED_DRAUGHT', 'ARRIVAL_CALC', 'ARRIVAL_PORT_CALC'})
     if cols.issubset(df.columns):
@@ -16,12 +18,13 @@ def checkColumns(df):
     return False
 
 def calcTimeDifference(timest2, timest1):
+    # calculate time difference between two time stamps in minutes
     timest2_date = datetime.strptime(timest2, '%d-%m-%y %H:%M')
     timest1_date = datetime.strptime(timest1, '%d-%m-%y %H:%M')
     timediff = (timest2_date-timest1_date).seconds/60
     return timediff
 
-def clean(pc, ip, dff):
+def clean(pc, ip, dff, delete, norm):
     start = time.time()
     shiplist = ships()
     df = dff
@@ -32,6 +35,7 @@ def clean(pc, ip, dff):
     speedtreshold = 15
 
     for i, row in df.iterrows():
+        # skip to be dropped indices for perfomance
         if i in index:
             continue
         print("current row:"+str(i))
@@ -79,34 +83,43 @@ def clean(pc, ip, dff):
                 if(check != None):
                     speed = check
                     df.at[i, 'SPEED'] = check
-            # interpolate between 2 timestamps that are atleast 5 mins away
+            # interpolate between 2 timestamps that are atleast 25 mins away
             prev_time = s.getLastTrack()['TIMESTAMP']
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
-                ip.interpolate(df, s, row, timejump, namelist, i)
+                ip.interpolate(df, s, row, timejump, namelist)
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
 
     df = df.drop(index) 
-    # df.to_csv('interresult3.csv',index=False)
-    df = ip.execute_interpolate(df)     
+    df = ip.execute_interpolate(df)    
+    if( delete != None):
+        df = delete.delete(df)
+    if( norm != None):
+        df = norm.normalize(df)
 
-
-    df.to_csv('reference.csv',index=False)
+    df.to_csv('ref3.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
-    print(len(index))
 
 if __name__ == "__main__":
     csvfile = sys.argv[1]
     if(csvfile.lower().endswith('.csv')):
         df = pd.read_csv(csvfile)
+        delete = None
+        norm = None
+        switches = ['-minmax', '-robust', '-standard']
         if(not checkColumns(df)):
             sys.exit("csv file does not have required columns")
+        # check for command line switches '-del' and the ones in switches are available
+        if('-del' in sys.argv):
+            delete = delete_sub_500()
+        if(any(word in sys.argv for word in switches)):
+            index = [word in sys.argv for word in switches].index(True)
+            switch = switches[index]
+            norm = normalizer(switch)
         ip = interpolation()
         pc = preclean()
-        clean(pc, ip, df)
+        clean(pc, ip, df, delete, norm)
     else:
         sys.exit("command line argument is not a csv file")
-# else:
-#     # data_cleaner got imported

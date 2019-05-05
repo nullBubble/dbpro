@@ -5,14 +5,12 @@ class ship:
         self.typ = typ   
         self.dep = dep
         trackinfo ={'SPEED':speed, 'LON':lon, 'LAT':lat,'COURSE':course,'HEADING':heading, 'TIMESTAMP':timestamp, 'ROW':row}
-        # trackinfo = [speed, lon, lat, course, heading, timestamp, row]
         self.track = []
         self.track.append(trackinfo)
     
     def updateTrack(self, speed, lon, lat, course, heading, timestamp, row):
         
         trackinfo ={'SPEED':speed, 'LON':lon, 'LAT':lat,'COURSE':course,'HEADING':heading, 'TIMESTAMP':timestamp, 'ROW':row}
-        # trackinfo = [speed, lon, lat, course, heading, timestamp, row]
         self.track.append(trackinfo)
 
     def getFirstTimestamp(self):
