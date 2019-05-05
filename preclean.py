@@ -32,8 +32,8 @@ class preclean():
         return namelist
 
     # convert port names to ints
-    def stringToInt(self, str):
+    def stringToInt(self, string):
         summe = 0
-        for c in str:
+        for c in string:
             summe = summe + ord(c)
         return summe

@@ -13,7 +13,6 @@ class normalizer():
         if( string == "-standard"):
             self.scaler = preprocessing.StandardScaler()
 
-
     def normalize(self, dff):
         df = dff
         scaler = self.scaler
@@ -27,5 +26,20 @@ class normalizer():
         df['DEPARTURE_PORT_NAME'] = scaler.fit_transform(df['DEPARTURE_PORT_NAME'].values.astype(float).reshape(-1,1))
         df['ARRIVAL_CALC'] = scaler.fit_transform(df['ARRIVAL_CALC'].values.astype(float).reshape(-1,1))
         df['ARRIVAL_PORT_CALC'] = scaler.fit_transform(df['ARRIVAL_PORT_CALC'].values.astype(float).reshape(-1,1))
+
+        return df
+
+    def normalize_row(self, dff):
+        df = dff
+        scaler = self.scaler
+        # df[df.columns] = scaler.fit_transform(df[df.columns])
+        df.at[0,'SHIPTYPE'] = scaler.fit_transform(df.at[0,'SHIPTYPE'].reshape(-1,1))
+        df.at[0,'SPEED'] = scaler.fit_transform(df.at[0,'SPEED'].reshape(-1,1))
+        df.at[0,'LON'] = scaler.fit_transform(df.at[0,'LON'].reshape(-1,1))
+        df.at[0,'LAT'] = scaler.fit_transform(df.at[0,'LAT'].reshape(-1,1))
+        df.at[0,'COURSE'] = scaler.fit_transform(df.at[0,'COURSE'].reshape(-1,1))
+        df.at[0,'HEADING'] = scaler.fit_transform(df.at[0,'HEADING'].reshape(-1,1))
+        # df.at[0,'TIMESTAMP'] = scaler.fit_transform(df.at[0,'TIMESTAMP'].reshape(-1,1))
+        # df.at[0,'DEPARTURE_PORT_NAME'] = scaler.fit_transform(df.at[0,'DEPARTURE_PORT_NAME'].reshape(-1,1))
 
         return df

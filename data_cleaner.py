@@ -9,6 +9,49 @@ from normalizer import normalizer
 import time
 import sys
 
+def prepare(row):
+
+    # delete reported draught
+    row = row.drop(columns=['REPORTED_DRAUGHT'])
+    Id = row.at[0,'SHIP_ID']
+    typ = row.at[0,'SHIPTYPE']
+    speed = row.at[0,'SPEED']
+    lon = row.at[0,'LON']
+    lat = row.at[0,'LAT']
+    course = row.at[0,'COURSE']
+    heading = row.at[0,'HEADING']
+    timestamp = row.at[0,'TIMESTAMP']
+    dep = row.at[0,'DEPARTURE_PORT_NAME']
+    s = ship_list.hasShip(Id)
+
+    if(s == None):
+        # add new ship to a list
+        new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, ind)
+        ship_list.addShip(new_ship)
+        row.at[0,'TIMESTAMP'] = 0
+    else:
+        # ship already seen atleast once, update track and timestamps with the help of 
+        # a ship object which holds the trackinformation for each single ship object
+        t1 = s.getFirstTimestamp()
+        t = row.at[0,'TIMESTAMP']
+        row.at['TIMESTAMP'] = calcTimeDifference(t, t1)
+
+        prev_speed = s.getLastTrack()['SPEED']
+        # correct erronous speed
+        if(speed-prev_speed > speedtreshold):
+            check = interp.speedcheck(s.getLastTrack(), row)
+            if(check != None):
+                speed = check
+                row.at[0,'SPEED'] = check
+
+        s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
+
+    dep = row.at[0,'DEPARTURE_PORT_NAME']
+    row.at[0,'DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
+    
+    row = norma.normalize_row(row)
+    return row
+
 def checkColumns(df):
     # check if columns availble when converting training data set
     cols = {'SHIP_ID', 'SHIPTYPE', 'SPEED', 'LON', 'LAT', 'COURSE', 'HEADING', 'TIMESTAMP'}
@@ -98,7 +141,7 @@ def clean(pc, ip, dff, delete, norm):
     if( norm != None):
         df = norm.normalize(df)
 
-    df.to_csv('ref3.csv',index=False)
+    df.to_csv('ref5.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
 
@@ -123,3 +166,9 @@ if __name__ == "__main__":
         clean(pc, ip, df, delete, norm)
     else:
         sys.exit("command line argument is not a csv file")
+else:
+    ship_list = ships()
+    pre_clean = preclean()
+    interp = interpolation()
+    norma = normalizer('-minmax')
+    ind = 0
