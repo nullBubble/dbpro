@@ -35,7 +35,7 @@ def prepare(row):
         # a ship object which holds the trackinformation for each single ship object
         t1 = s.getFirstTimestamp()
         t = row.at[0,'TIMESTAMP']
-        row.at['TIMESTAMP'] = calcTimeDifference(t, t1)
+        row.at[0, 'TIMESTAMP'] = calcTimeDifference(t, t1)
 
         prev_speed = s.getLastTrack()['SPEED']
         # correct erronous speed
