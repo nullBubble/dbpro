@@ -12,6 +12,7 @@ import sys
 def prepare(row):
 
     # delete reported draught
+    speedtreshold = 15
     row = row.drop(columns=['REPORTED_DRAUGHT'])
     Id = row.at[0,'SHIP_ID']
     typ = row.at[0,'SHIPTYPE']
@@ -43,8 +44,8 @@ def prepare(row):
             if(check != None):
                 speed = check
                 row.at[0,'SPEED'] = check
-
-        s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
+        # TODO think of a way to increase row index. or is it needed?
+        s.updateTrack(speed, lon, lat, course, heading, timestamp, 0)
 
     dep = row.at[0,'DEPARTURE_PORT_NAME']
     row.at[0,'DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
@@ -141,7 +142,7 @@ def clean(pc, ip, dff, delete, norm):
     if( norm != None):
         df = norm.normalize(df)
 
-    df.to_csv('ref5.csv',index=False)
+    df.to_csv('t1.csv',index=False)
     end = time.time()
     print("time:"+str(end-start))
 

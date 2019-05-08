@@ -31,15 +31,18 @@ class normalizer():
 
     def normalize_row(self, dff):
         df = dff
-        scaler = self.scaler
-        # df[df.columns] = scaler.fit_transform(df[df.columns])
-        df.at[0,'SHIPTYPE'] = scaler.fit_transform(df.at[0,'SHIPTYPE'].reshape(-1,1))
-        df.at[0,'SPEED'] = scaler.fit_transform(df.at[0,'SPEED'].reshape(-1,1))
-        df.at[0,'LON'] = scaler.fit_transform(df.at[0,'LON'].reshape(-1,1))
-        df.at[0,'LAT'] = scaler.fit_transform(df.at[0,'LAT'].reshape(-1,1))
-        df.at[0,'COURSE'] = scaler.fit_transform(df.at[0,'COURSE'].reshape(-1,1))
-        df.at[0,'HEADING'] = scaler.fit_transform(df.at[0,'HEADING'].reshape(-1,1))
-        # df.at[0,'TIMESTAMP'] = scaler.fit_transform(df.at[0,'TIMESTAMP'].reshape(-1,1))
-        # df.at[0,'DEPARTURE_PORT_NAME'] = scaler.fit_transform(df.at[0,'DEPARTURE_PORT_NAME'].reshape(-1,1))
-
+        df.ix[0, 'SHIPTYPE'] = self.calcMinMax(df.at[0,'SHIPTYPE'], 99, 0)
+        df.ix[0, 'SPEED'] = self.calcMinMax(df.at[0,'SPEED'], 102.2, 0)
+        df.ix[0, 'LON'] = self.calcMinMax(df.at[0,'LON'], 36.13883, -5.528025)
+        df.ix[0, 'LAT'] = self.calcMinMax(df.at[0,'LAT'], 44.42255, 31.1526)
+        df.ix[0, 'COURSE'] = self.calcMinMax(df.at[0,'COURSE'], 359, 0)
+        df.ix[0, 'HEADING'] = self.calcMinMax(df.at[0,'HEADING'], 511, 0)
+        df.ix[0, 'TIMESTAMP'] = self.calcMinMax(df.at[0,'TIMESTAMP'], 2545, 0)
+        df.ix[0, 'DEPARTURE_PORT_NAME'] = self.calcMinMax(df.at[0,'DEPARTURE_PORT_NAME'], 1151, 345)
+        
         return df
+
+    def calcMinMax(self, val, maximum, minimum):
+        x = (val - minimum)/(maximum-minimum)
+        print(x)
+        return x
