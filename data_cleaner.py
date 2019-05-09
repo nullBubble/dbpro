@@ -142,7 +142,7 @@ def clean(pc, ip, dff, delete, norm):
     if( norm != None):
         df = norm.normalize(df)
 
-    df.to_csv('t1.csv',index=False)
+    df.to_csv(sys.argv[len(sys.argv)-1],index=False)
     end = time.time()
     print("time:"+str(end-start))
 
