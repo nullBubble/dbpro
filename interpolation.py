@@ -86,7 +86,7 @@ class interpolation():
         # create new pandas dataframe and append to existing one
         add_df = pd.DataFrame([x for x in self.to_be_interpolated], columns=['SHIP_ID','SHIPTYPE','SPEED','LON','LAT','COURSE','HEADING','TIMESTAMP','DEPARTURE_PORT_NAME','ARRIVAL_CALC','ARRIVAL_PORT_CALC'])
         
-        df = df.append(add_df,ignore_index=True)
+        df = df.append(add_df,ignore_index=True, sort=False)
 
         return df
 
