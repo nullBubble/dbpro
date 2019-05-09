@@ -44,5 +44,4 @@ class normalizer():
 
     def calcMinMax(self, val, maximum, minimum):
         x = (val - minimum)/(maximum-minimum)
-        print(x)
         return x
