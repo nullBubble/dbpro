@@ -9,7 +9,7 @@ from normalizer import normalizer
 import time
 import sys
 
-def prepare(row):
+def prepare(row, keepPortname):
 
     # delete reported draught
     speedtreshold = 15
@@ -47,10 +47,11 @@ def prepare(row):
         # TODO think of a way to increase row index. or is it needed?
         s.updateTrack(speed, lon, lat, course, heading, timestamp, 0)
 
-    dep = row.at[0,'DEPARTURE_PORT_NAME']
-    row.at[0,'DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
+    # dep = row.at[0,'DEPARTURE_PORT_NAME']
+    if(not keepPortname):
+        row.at[0,'DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
     
-    row = norma.normalize_row(row)
+    row = norma.normalize_minmax(row, keepPortname)
     return row
 
 def checkColumns(df):
@@ -68,7 +69,7 @@ def calcTimeDifference(timest2, timest1):
     timediff = (timest2_date-timest1_date).seconds/60
     return timediff
 
-def clean(pc, ip, dff, delete, norm):
+def clean(pc, ip, dff, delete, norm, keepPortname):
     start = time.time()
     shiplist = ships()
     df = dff
@@ -79,11 +80,12 @@ def clean(pc, ip, dff, delete, norm):
     speedtreshold = 15
 
     for i, row in df.iterrows():
+
+        if(i % 10000 == 0): print("current row:"+str(i))
         # skip to be dropped indices for perfomance
         if i in index:
             continue
-        print("current row:"+str(i))
-
+        
         Id = row['SHIP_ID']
         typ = row['SHIPTYPE']
         speed = row['SPEED']
@@ -95,8 +97,9 @@ def clean(pc, ip, dff, delete, norm):
 
         dep = row['DEPARTURE_PORT_NAME']
         arrival = row['ARRIVAL_PORT_CALC']
-        df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
-        df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
+        if(not keepPortname):
+            df.at[i, 'ARRIVAL_PORT_CALC'] = namelist[arrival]
+            df.at[i, 'DEPARTURE_PORT_NAME'] = namelist[dep]
 
         s = shiplist.hasShip(Id)
         if(s == None):
@@ -140,7 +143,7 @@ def clean(pc, ip, dff, delete, norm):
     if( delete != None):
         df = delete.delete(df)
     if( norm != None):
-        df = norm.normalize(df)
+        df = norm.normalize(df, keepPortname)
 
     df.to_csv(sys.argv[len(sys.argv)-1],index=False)
     end = time.time()
@@ -152,19 +155,23 @@ if __name__ == "__main__":
         df = pd.read_csv(csvfile)
         delete = None
         norm = None
+        keepPortname = False
         switches = ['-minmax', '-robust', '-standard']
         if(not checkColumns(df)):
             sys.exit("csv file does not have required columns")
         # check for command line switches '-del' and the ones in switches are available
         if('-del' in sys.argv):
             delete = delete_sub_500()
+        # preserve port names if port-flag is given
+        if('-keepport' in sys.argv):
+            keepPortname = True
         if(any(word in sys.argv for word in switches)):
             index = [word in sys.argv for word in switches].index(True)
             switch = switches[index]
             norm = normalizer(switch)
         ip = interpolation()
         pc = preclean()
-        clean(pc, ip, df, delete, norm)
+        clean(pc, ip, df, delete, norm, keepPortname)
     else:
         sys.exit("command line argument is not a csv file")
 else:
