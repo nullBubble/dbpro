@@ -21,7 +21,7 @@ class interpolation():
         d = 2*earth_rad*asin(sqrt(a))
         return d
 
-    def interpolate(self, df, ship, row, timejump, namelist):
+    def interpolate(self, df, ship, row, timejump, namelist, keepPortname):
 
         earth_rad = 6371.0088
         track = ship.getLastTrack()
@@ -37,6 +37,17 @@ class interpolation():
         lat1 = track['LAT']
         lon2 = row['LON']
         lat2 = row['LAT']
+
+        if(lon2>lon1):
+            dir_x = 1
+        else:
+            dir_x = -1
+            
+        if(lat2>lat1):
+            dir_y = 1
+        else:
+            dir_y = -1
+
         route_len = self.harvesine(lon1,lat1,lon2,lat2)
         # calculate bearing cause information in ais is inconsistent
         bearing = self.bearing(lon1,lat1,lon2,lat2)
@@ -69,10 +80,29 @@ class interpolation():
             new_arrival_calc = last_arrival_time-i
             if(new_arrival_calc < 0):
                 break
+
+            if(dir_x == 1 and dir_y == 1):
+                if(new_lon > lon2 and new_lat > lat2):
+                    break
+            if(dir_x == 1 and dir_y == -1):
+                if(new_lon > lon2 and new_lat < lat2):
+                    break
+            if(dir_x == -1 and dir_y == 1):
+                if(new_lon < lon2 and new_lat > lat2):
+                    break
+            if(dir_x == -1 and dir_y == -1):
+                if(new_lon < lon2 and new_lat < lat2):
+                    break
+
             arrival_port = df.at[ship.getLastTrack()['ROW'],'ARRIVAL_PORT_CALC']
            
             # create new row 
-            new_row = [ship.getID(),ship.getType(),track['SPEED'],new_lon,new_lat,track['COURSE'],track['HEADING'],new_time,namelist[ship.getDep()],new_arrival_calc,arrival_port]
+            if(not keepPortname):
+                departure = namelist[ship.getDep()]
+            else:
+                departure = ship.getDep()
+
+            new_row = [ship.getID(),ship.getType(),track['SPEED'],new_lon,new_lat,track['COURSE'],track['HEADING'],new_time,departure,new_arrival_calc,arrival_port]
             # add row to list to append in a single step instead of appending one single line for perfomance
             self.to_be_interpolated.append(new_row)
 
@@ -87,6 +117,7 @@ class interpolation():
         add_df = pd.DataFrame([x for x in self.to_be_interpolated], columns=['SHIP_ID','SHIPTYPE','SPEED','LON','LAT','COURSE','HEADING','TIMESTAMP','DEPARTURE_PORT_NAME','ARRIVAL_CALC','ARRIVAL_PORT_CALC'])
         
         df = df.append(add_df,ignore_index=True, sort=False)
+        df = df.reset_index(drop=True)
 
         return df
 

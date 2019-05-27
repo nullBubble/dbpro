@@ -134,16 +134,20 @@ def clean(pc, ip, dff, delete, norm, keepPortname):
             prev_time = s.getLastTrack()['TIMESTAMP']
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
-                ip.interpolate(df, s, row, timejump, namelist)
+                ip.interpolate(df, s, row, timejump, namelist, keepPortname)
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
 
-    df = df.drop(index) 
-    df = ip.execute_interpolate(df)    
+    df = df.drop(index)
+    df = ip.execute_interpolate(df)
     if( delete != None):
         df = delete.delete(df)
     if( norm != None):
         df = norm.normalize(df, keepPortname)
+
+    # index = pc.uselessIndices(df)
+    # df = df.drop(index)
+    df = pd.DataFrame(df.groupby(['SHIP_ID','ARRIVAL_PORT_CALC','DEPARTURE_PORT_NAME']).apply(lambda x: x.sort_values(['ARRIVAL_CALC'],ascending=False)))
 
     df.to_csv(sys.argv[len(sys.argv)-1],index=False)
     end = time.time()
