@@ -35,43 +35,43 @@ class normalizer():
     # these data from the cleaned dataset with -del and these functions are for the single line normalization/standardization
     def normalize_minmax(self, dff, keepPortname):
         df = dff
-        df.ix[0, 'SHIPTYPE'] = self.calcMinMax(df.at[0,'SHIPTYPE'], 99, 0)
-        df.ix[0, 'SPEED'] = self.calcMinMax(df.at[0,'SPEED'], 54.4, 0.1)
-        df.ix[0, 'LON'] = self.calcMinMax(df.at[0,'LON'], 38.827418, -5.528025)
-        df.ix[0, 'LAT'] = self.calcMinMax(df.at[0,'LAT'], 44.450144, 29.611588)
-        df.ix[0, 'COURSE'] = self.calcMinMax(df.at[0,'COURSE'], 359, 0)
-        df.ix[0, 'HEADING'] = self.calcMinMax(df.at[0,'HEADING'], 511, 0)
-        df.ix[0, 'TIMESTAMP'] = self.calcMinMax(df.at[0,'TIMESTAMP'], 2545, 0)
+        df.at[ 'SHIPTYPE'] = self.calcMinMax(df.at['SHIPTYPE'], 99, 0)
+        df.at[ 'SPEED'] = self.calcMinMax(df.at['SPEED'], 54.4, 0.1)
+        df.at[ 'LON'] = self.calcMinMax(df.at['LON'], 36.13732, -5.528025)
+        df.at[ 'LAT'] = self.calcMinMax(df.at['LAT'], 44.450144, 31.1526)
+        df.at[ 'COURSE'] = self.calcMinMax(df.at['COURSE'], 359, 0)
+        df.at[ 'HEADING'] = self.calcMinMax(df.at['HEADING'], 511, 0)
+        df.at[ 'TIMESTAMP'] = self.calcMinMax(df.at['TIMESTAMP'], 2486, 0)
         if(not keepPortname):
-            df.ix[0, 'DEPARTURE_PORT_NAME'] = self.calcMinMax(df.at[0,'DEPARTURE_PORT_NAME'], 1151, 345)
+            df.at[ 'DEPARTURE_PORT_NAME'] = self.calcMinMax(df.at[0,'DEPARTURE_PORT_NAME'], 1151, 345)
         
         return df
 
     def normalize_standard(self, dff, keepPortname):
         df = dff
-        df.ix[0, 'SHIPTYPE'] = self.calcStd(df.at[0,'SHIPTYPE'], 69.27547, 15.4021)
-        df.ix[0, 'SPEED'] = self.calcStd(df.at[0,'SPEED'], 10.32861, 5.7465)
-        df.ix[0, 'LON'] = self.calcStd(df.at[0,'LON'], 11.61679, 10.581109)
-        df.ix[0, 'LAT'] = self.calcStd(df.at[0,'LAT'], 38.60534, 2.80637)
-        df.ix[0, 'COURSE'] = self.calcStd(df.at[0,'COURSE'], 174.70967, 103.64085)
-        df.ix[0, 'HEADING'] = self.calcStd(df.at[0,'HEADING'], 208.02604, 140.01892)
-        df.ix[0, 'TIMESTAMP'] = self.calcStd(df.at[0,'TIMESTAMP'], 715.46203, 438.16584)
+        df.at[ 'SHIPTYPE'] = self.calcStd(df.at[0,'SHIPTYPE'], 69.89441, 14.44803)
+        df.at[ 'SPEED'] = self.calcStd(df.at[0,'SPEED'], 11.14106, 5.19502)
+        df.at[ 'LON'] = self.calcStd(df.at[0,'LON'], 11.85457, 10.53640)
+        df.at[ 'LAT'] = self.calcStd(df.at[0,'LAT'], 38.58507, 2.74)
+        df.at[ 'COURSE'] = self.calcStd(df.at[0,'COURSE'], 174.614597, 102.65382)
+        df.at[ 'HEADING'] = self.calcStd(df.at[0,'HEADING'], 204.10748, 136.73664)
+        df.at[ 'TIMESTAMP'] = self.calcStd(df.at[0,'TIMESTAMP'], 700.803322, 432.37567)
         if(not keepPortname):
-            df.ix[0, 'DEPARTURE_PORT_NAME'] = self.calcStd(df.at[0,'DEPARTURE_PORT_NAME'], 646.2459, 187.93661)
+            df.at[ 'DEPARTURE_PORT_NAME'] = self.calcStd(df.at[0,'DEPARTURE_PORT_NAME'], 643.04063, 186.123137)
 
         return df
 
     def normalize_robust(self, dff, keepPortname):
         df = dff
-        df.ix[0, 'SHIPTYPE'] = self.calcRobust(df.at[0,'SHIPTYPE'], 70.0, 10.0)
-        df.ix[0, 'SPEED'] = self.calcRobust(df.at[0,'SPEED'], 11.3, 6.1)
-        df.ix[0, 'LON'] = self.calcRobust(df.at[0,'LON'], 9.535745, 15.58715)
-        df.ix[0, 'LAT'] = self.calcRobust(df.at[0,'LAT'], 38.40793, 4.252385)
-        df.ix[0, 'COURSE'] = self.calcRobust(df.at[0,'COURSE'], 169.0, 188.0)
-        df.ix[0, 'HEADING'] = self.calcRobust(df.at[0,'HEADING'], 203.0, 203.0)
-        df.ix[0, 'TIMESTAMP'] = self.calcRobust(df.at[0,'TIMESTAMP'], 701.0, 739.0)
+        df.at[ 'SHIPTYPE'] = self.calcRobust(df.at[0,'SHIPTYPE'], 70.0, 10.0)
+        df.at[ 'SPEED'] = self.calcRobust(df.at[0,'SPEED'], 11.7, 5.3)
+        df.at[ 'LON'] = self.calcRobust(df.at[0,'LON'], 9.887167, 16.55377)
+        df.at[ 'LAT'] = self.calcRobust(df.at[0,'LAT'], 38.34277, 4.1488)
+        df.at[ 'COURSE'] = self.calcRobust(df.at[0,'COURSE'], 166.0, 187.0)
+        df.at[ 'HEADING'] = self.calcRobust(df.at[0,'HEADING'], 199.0, 200.0)
+        df.at[ 'TIMESTAMP'] = self.calcRobust(df.at[0,'TIMESTAMP'], 686.0, 739.0)
         if(not keepPortname):
-            df.ix[0, 'DEPARTURE_PORT_NAME'] = self.calcRobust(df.at[0,'DEPARTURE_PORT_NAME'], 647.0, 191.0)
+            df.at[ 'DEPARTURE_PORT_NAME'] = self.calcRobust(df.at[0,'DEPARTURE_PORT_NAME'], 646.0, 191.0)
 
         return df
 

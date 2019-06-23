@@ -9,33 +9,33 @@ from normalizer import normalizer
 import time
 import sys
 
-def prepare(row, keepPortname):
+def prepare(row, keepPortname = True):
 
     # delete reported draught
     speedtreshold = 15
     row = row.drop(columns=['REPORTED_DRAUGHT'])
-    Id = row.at[0,'SHIP_ID']
-    typ = row.at[0,'SHIPTYPE']
-    speed = row.at[0,'SPEED']
-    lon = row.at[0,'LON']
-    lat = row.at[0,'LAT']
-    course = row.at[0,'COURSE']
-    heading = row.at[0,'HEADING']
-    timestamp = row.at[0,'TIMESTAMP']
-    dep = row.at[0,'DEPARTURE_PORT_NAME']
+    Id = row.at['SHIP_ID']
+    typ = row.at['SHIPTYPE']
+    speed = row.at['SPEED']
+    lon = row.at['LON']
+    lat = row.at['LAT']
+    course = row.at['COURSE']
+    heading = row.at['HEADING']
+    timestamp = row.at['TIMESTAMP']
+    dep = row.at['DEPARTURE_PORT_NAME']
     s = ship_list.hasShip(Id)
 
     if(s == None):
         # add new ship to a list
-        new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, ind)
-        ship_list.addShip(new_ship)
-        row.at[0,'TIMESTAMP'] = 0
+        s = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, ind)
+        ship_list.addShip(s)
+        row.at['TIMESTAMP'] = 0
     else:
         # ship already seen atleast once, update track and timestamps with the help of 
         # a ship object which holds the trackinformation for each single ship object
         t1 = s.getFirstTimestamp()
-        t = row.at[0,'TIMESTAMP']
-        row.at[0, 'TIMESTAMP'] = calcTimeDifference(t, t1)
+        t = row.at['TIMESTAMP']
+        row.at[ 'TIMESTAMP'] = calcTimeDifference(t, t1)
 
         prev_speed = s.getLastTrack()['SPEED']
         # correct erronous speed
@@ -43,16 +43,16 @@ def prepare(row, keepPortname):
             check = interp.speedcheck(s.getLastTrack(), row)
             if(check != None):
                 speed = check
-                row.at[0,'SPEED'] = check
+                row.at['SPEED'] = check
         # TODO think of a way to increase row index. or is it needed?
         s.updateTrack(speed, lon, lat, course, heading, timestamp, 0)
 
     # dep = row.at[0,'DEPARTURE_PORT_NAME']
     if(not keepPortname):
-        row.at[0,'DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
+        row.at['DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
     
     row = norma.normalize_minmax(row, keepPortname)
-    return row
+    return row,s
 
 def checkColumns(df):
     # check if columns availble when converting training data set
@@ -147,7 +147,7 @@ def clean(pc, ip, dff, delete, norm, keepPortname):
 
     # index = pc.uselessIndices(df)
     # df = df.drop(index)
-    df = pd.DataFrame(df.groupby(['SHIP_ID','ARRIVAL_PORT_CALC','DEPARTURE_PORT_NAME']).apply(lambda x: x.sort_values(['ARRIVAL_CALC'],ascending=False)))
+    # df = pd.DataFrame(df.groupby(['SHIP_ID','ARRIVAL_PORT_CALC','DEPARTURE_PORT_NAME']).apply(lambda x: x.sort_values(['ARRIVAL_CALC'],ascending=False)))
 
     df.to_csv(sys.argv[len(sys.argv)-1],index=False)
     end = time.time()
