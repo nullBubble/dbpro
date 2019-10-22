@@ -9,10 +9,11 @@ from normalizer import normalizer
 import time
 import sys
 
+# method to prepare a single row
 def prepare(row, keepPortname = True):
 
-    # delete reported draught
     speedtreshold = 15
+     # delete reported draught
     row = row.drop(columns=['REPORTED_DRAUGHT'])
     Id = row.at['SHIP_ID']
     typ = row.at['SHIPTYPE']
@@ -35,7 +36,7 @@ def prepare(row, keepPortname = True):
         # a ship object which holds the trackinformation for each single ship object
         t1 = s.getFirstTimestamp()
         t = row.at['TIMESTAMP']
-        row.at[ 'TIMESTAMP'] = calcTimeDifference(t, t1)
+        row.at['TIMESTAMP'] = calcTimeDifference(t, t1)
 
         prev_speed = s.getLastTrack()['SPEED']
         # correct erronous speed
@@ -44,10 +45,9 @@ def prepare(row, keepPortname = True):
             if(check != None):
                 speed = check
                 row.at['SPEED'] = check
-        # TODO think of a way to increase row index. or is it needed?
+        
         s.updateTrack(speed, lon, lat, course, heading, timestamp, 0)
-
-    # dep = row.at[0,'DEPARTURE_PORT_NAME']
+        
     if(not keepPortname):
         row.at['DEPARTURE_PORT_NAME'] = pre_clean.stringToInt(dep)
     
@@ -70,6 +70,7 @@ def calcTimeDifference(timest2, timest1):
     return timediff
 
 def clean(pc, ip, dff, delete, norm, keepPortname):
+    # instantiate objects and set tresholds for speed correction and time interp.
     start = time.time()
     shiplist = ships()
     df = dff
@@ -107,10 +108,11 @@ def clean(pc, ip, dff, delete, norm, keepPortname):
             new_ship = ship(Id, typ, speed, lon, lat, course, heading, timestamp, dep, i)
             shiplist.addShip(new_ship)
             # compute the difference from this timestamp in regards to the arrival time
+            # and set that value to the new arrival time
             arr = row['ARRIVAL_CALC']  
             t = row['TIMESTAMP']
             df.at[i, 'ARRIVAL_CALC'] = calcTimeDifference(arr, t)
-            # set the first timestamp seen for a ship, so a new route, to 0. following
+            # set the first timestamp seen for a ship to 0. following
             # timestamps are relative to this 0 time value
             df.at[i, 'TIMESTAMP'] = 0
             
@@ -134,26 +136,26 @@ def clean(pc, ip, dff, delete, norm, keepPortname):
             prev_time = s.getLastTrack()['TIMESTAMP']
             timejump = calcTimeDifference(timestamp, prev_time)
             if(timejump > timetreshold):
-                ip.interpolate(df, s, row, timejump, namelist, keepPortname)
+                ip.interpolate(df, s, row, timejump, namelist)
 
             s.updateTrack(speed, lon, lat, course, heading, timestamp, i)
 
-    df = df.drop(index)
-    df = ip.execute_interpolate(df)
+    # drop the irrelevant rows and add the interpolated rows and
+    # depending on the switches given in the terminal delete and normalize
+    df = df.drop(index) 
+    df = ip.execute_interpolate(df)    
     if( delete != None):
         df = delete.delete(df)
     if( norm != None):
         df = norm.normalize(df, keepPortname)
-
-    # index = pc.uselessIndices(df)
-    # df = df.drop(index)
-    # df = pd.DataFrame(df.groupby(['SHIP_ID','ARRIVAL_PORT_CALC','DEPARTURE_PORT_NAME']).apply(lambda x: x.sort_values(['ARRIVAL_CALC'],ascending=False)))
 
     df.to_csv(sys.argv[len(sys.argv)-1],index=False)
     end = time.time()
     print("time:"+str(end-start))
 
 if __name__ == "__main__":
+    # give name of input file in terminal and depending on switches instantiate objects,
+    # also some generic checks if input file not csv file or has not the required columns
     csvfile = sys.argv[1]
     if(csvfile.lower().endswith('.csv')):
         df = pd.read_csv(csvfile)
@@ -166,7 +168,7 @@ if __name__ == "__main__":
         # check for command line switches '-del' and the ones in switches are available
         if('-del' in sys.argv):
             delete = delete_sub_500()
-        # preserve port names if port-flag is given
+        # preserve port names if keepport switch is given
         if('-keepport' in sys.argv):
             keepPortname = True
         if(any(word in sys.argv for word in switches)):

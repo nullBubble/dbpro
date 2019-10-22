@@ -1,5 +1,8 @@
 class ship:
     
+    # ship class which creates ship objects needed for the data cleaning process 
+    # with various fields taken from the input file
+    
     def __init__(self, Id, typ, speed, lon, lat, course, heading, timestamp, dep, row):
         self.Id = Id
         self.typ = typ   

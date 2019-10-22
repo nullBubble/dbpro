@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import sys
 
+# delete entries with less than 500 entries even after interpolating
 class delete_sub_500:
-
+    
     def delete(self, dff):
-        # delete entries with less than 500 entries even after interpolating
         df = dff
         df_id = df[['SHIP_ID']]
         df_id_count = df_id['SHIP_ID'].value_counts()

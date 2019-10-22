@@ -4,8 +4,8 @@ import pandas as pd
 
 class normalizer():
 
+    # set scaling method given as a switch in the terminal
     def __init__(self, string):
-        # set scaling method given as a switch in the terminal
         if (string == "-minmax"):
             self.scaler = preprocessing.MinMaxScaler()
         if( string == "-robust"):
@@ -13,6 +13,8 @@ class normalizer():
         if( string == "-standard"):
             self.scaler = preprocessing.StandardScaler()
 
+    # scales or normalize all the columns listed below with the scaler that was set first
+    # depending on if the keepport switch was given in the terminal we scale or ignore the rows with port names
     def normalize(self, dff, keepPortname):
         df = dff
         scaler = self.scaler
@@ -32,7 +34,8 @@ class normalizer():
 
         return df
 
-    # these data from the cleaned dataset with -del and these functions are for the single line normalization/standardization
+    # these values are from the cleaned dataset with -del switch and these functions are for the 
+    # single line normalization or standardization. values are provided from a simple help program that is not included 
     def normalize_minmax(self, dff, keepPortname):
         df = dff
         df.at[ 'SHIPTYPE'] = self.calcMinMax(df.at['SHIPTYPE'], 99, 0)
